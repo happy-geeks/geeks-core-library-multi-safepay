@@ -1,2 +1,2 @@
-# GeeksCoreLibrary - MultiSafePay
-MultiSafePay plugin for the order process of the GeeksCoreLibrary.
+# GeeksCoreLibrary - MultiSafepay
+MultiSafepay plugin for the order process of the GeeksCoreLibrary.
