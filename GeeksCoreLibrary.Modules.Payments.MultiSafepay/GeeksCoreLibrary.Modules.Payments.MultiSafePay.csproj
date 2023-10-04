@@ -10,11 +10,8 @@
         <FileVersion>1.0.0.0</FileVersion>
     </PropertyGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\..\GeeksCoreLibrary\GeeksCoreLibrary\GeeksCoreLibrary.csproj" />
-    </ItemGroup>
-
 	<ItemGroup>
+      <PackageReference Include="GeeksCoreLibrary" Version="4.0.1" />
       <PackageReference Include="MultiSafepay" Version="0.8.7" />
 	</ItemGroup>
 
