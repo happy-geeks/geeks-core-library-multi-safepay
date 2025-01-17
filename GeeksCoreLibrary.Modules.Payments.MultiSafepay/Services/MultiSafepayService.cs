@@ -24,28 +24,20 @@ using Constants = GeeksCoreLibrary.Components.OrderProcess.Models.Constants;
 namespace GeeksCoreLibrary.Modules.Payments.MultiSafepay.Services;
 
 /// <inheritdoc cref="IPaymentServiceProviderService" />
-public class MultiSafepayService : PaymentServiceProviderBaseService, IPaymentServiceProviderService, IScopedService
+public class MultiSafepayService(
+    ILogger<MultiSafepayService> logger,
+    IOptions<GclSettings> gclSettings,
+    IShoppingBasketsService shoppingBasketsService,
+    IDatabaseConnection databaseConnection,
+    IDatabaseHelpersService databaseHelpersService,
+    IHttpContextAccessor? httpContextAccessor = null)
+    : PaymentServiceProviderBaseService(databaseHelpersService, databaseConnection, logger, httpContextAccessor), IPaymentServiceProviderService, IScopedService
 {
-    private readonly GclSettings gclSettings;
-    private readonly IHttpContextAccessor httpContextAccessor;
-    private readonly IShoppingBasketsService shoppingBasketsService;
-    private readonly IDatabaseConnection databaseConnection;
+    private readonly GclSettings gclSettings = gclSettings.Value;
+    private readonly IHttpContextAccessor? httpContextAccessor = httpContextAccessor;
+    private readonly IDatabaseConnection databaseConnection = databaseConnection;
 
-    private MultiSafepayClient client;
-
-    public MultiSafepayService(ILogger<MultiSafepayService> logger,
-                               IOptions<GclSettings> gclSettings,
-                               IShoppingBasketsService shoppingBasketsService,
-                               IDatabaseConnection databaseConnection,
-                               IDatabaseHelpersService databaseHelpersService,
-                               IHttpContextAccessor httpContextAccessor = null)
-        : base(databaseHelpersService, databaseConnection, logger, httpContextAccessor)
-    {
-        this.gclSettings = gclSettings.Value;
-        this.httpContextAccessor = httpContextAccessor;
-        this.shoppingBasketsService = shoppingBasketsService;
-        this.databaseConnection = databaseConnection;
-    }
+    private MultiSafepayClient? client;
 
     /// <summary>
     /// Create the client based on the environment.
@@ -84,11 +76,11 @@ public class MultiSafepayService : PaymentServiceProviderBaseService, IPaymentSe
             AmountInCents = totalPriceInCents,
             CurrencyCode = multiSafepaySettings.Currency,
             PaymentOptions = new PaymentOptions(multiSafepaySettings.WebhookUrl,
-                                                multiSafepaySettings.SuccessUrl,
-                                                multiSafepaySettings.FailUrl)
+                multiSafepaySettings.SuccessUrl,
+                multiSafepaySettings.FailUrl)
         };
 
-        SetupEnvironment(multiSafepaySettings.ApiKey);
+        SetupEnvironment(multiSafepaySettings.ApiKey!);
 
         var description = firstBasket.Main.GetDetailValue(MultiSafepayConstants.TransactionReferenceProperty);
         if (String.IsNullOrWhiteSpace(description))
@@ -104,17 +96,17 @@ public class MultiSafepayService : PaymentServiceProviderBaseService, IPaymentSe
 
         order.Description = description;
 
-        string error = null;
-        OrderResponse response = null;
+        string? error = null;
+        OrderResponse response = new();
         try
         {
-            response = client.CustomOrder(order);
+            response = client!.CustomOrder(order);
 
             return new PaymentRequestResult
             {
                 Successful = true,
                 Action = PaymentRequestActions.Redirect,
-                ActionData = response.PaymentUrl
+                ActionData = response?.PaymentUrl
             };
         }
         catch (Exception exception)
@@ -150,16 +142,16 @@ public class MultiSafepayService : PaymentServiceProviderBaseService, IPaymentSe
         // Retrieve the order with the given transaction id/order id to check the status.
         var orderId = httpContextAccessor.HttpContext.Request.Query[MultiSafepayConstants.WebhookInvoiceNumberProperty].ToString();
         var multiSafepaySettings = (MultiSafepaySettingsModel) paymentMethodSettings.PaymentServiceProvider;
-        OrderResponse response = null;
+        OrderResponse response = new();
 
-        SetupEnvironment(multiSafepaySettings.ApiKey);
+        SetupEnvironment(multiSafepaySettings.ApiKey!);
 
         var success = false;
-        string error = null;
+        string? error = null;
         try
         {
-            response = client.GetOrder(orderId);
-            success = response.Status.ToLower() == "completed";
+            response = client!.GetOrder(orderId);
+            success = response.Status.Equals("completed", StringComparison.OrdinalIgnoreCase);
         }
         catch (Exception exception)
         {
@@ -228,8 +220,8 @@ AND paymentServiceProvider.entity_type = '{Constants.PaymentServiceProviderEntit
     }
 
     /// <inheritdoc />
-    public string GetInvoiceNumberFromRequest()
+    public Task<string> GetInvoiceNumberFromRequestAsync()
     {
-        return HttpContextHelpers.GetRequestValue(httpContextAccessor?.HttpContext, MultiSafepayConstants.WebhookInvoiceNumberProperty);
+        return Task.FromResult(HttpContextHelpers.GetRequestValue(httpContextAccessor?.HttpContext, MultiSafepayConstants.WebhookInvoiceNumberProperty));
     }
 }
