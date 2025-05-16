@@ -16,5 +16,15 @@
         <PackageReference Include="MultiSafepay" Version="0.10.3" />
     </ItemGroup>
 
-
+    <!-- Copy the LICENSE and README.md files to the package -->
+    <ItemGroup>
+        <None Include="..\LICENSE">
+            <Pack>True</Pack>
+            <PackagePath>.\</PackagePath>
+        </None>
+        <None Include="..\README.md">
+            <Pack>True</Pack>
+            <PackagePath>.\</PackagePath>
+        </None>
+    </ItemGroup>
 </Project>
