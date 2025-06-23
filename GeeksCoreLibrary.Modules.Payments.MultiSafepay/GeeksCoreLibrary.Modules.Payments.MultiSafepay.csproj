@@ -12,7 +12,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="GeeksCoreLibrary" Version="5.3.2506.6" />
+        <PackageReference Include="GeeksCoreLibrary" Version="5.3.2506.7" />
         <PackageReference Include="MultiSafepay" Version="0.10.3" />
     </ItemGroup>
 
